@@ -12,12 +12,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Data\Migrations\" />
+    <ProjectReference Include="..\KitapEvi.Models\KitapEvi.Models.csproj" />
+    <ProjectReference Include="..\KitapEvi.Utility\KitapEvi.Utility.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\KitapEvi.Models\KitapEvi.Models.csproj" />
-    <ProjectReference Include="..\KitapEvi.Utility\KitapEvi.Utility.csproj" />
+    <Folder Include="Migrations\" />
   </ItemGroup>
 
 </Project>
