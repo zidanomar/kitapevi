@@ -16,8 +16,4 @@
     <ProjectReference Include="..\KitapEvi.Utility\KitapEvi.Utility.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Migrations\" />
-  </ItemGroup>
-
 </Project>
