@@ -4,11 +4,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using KitapEvi.DataAccess.Repository.IRepository;
 using KitapEvi.Models;
+using KitapEvi.Utility;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KitapEvi.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Authorize(Roles = SharedDetail.Role_Admin + "," + SharedDetail.Role_Employee)]
     public class CompanyController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;

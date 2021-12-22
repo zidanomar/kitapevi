@@ -6,12 +6,15 @@ using System.Threading.Tasks;
 using KitapEvi.DataAccess.Repository.IRepository;
 using KitapEvi.Models;
 using KitapEvi.Models.ViewModels;
+using KitapEvi.Utility;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 namespace KitapEvi.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Authorize(Roles = SharedDetail.Role_Admin)]
     public class ProductController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;

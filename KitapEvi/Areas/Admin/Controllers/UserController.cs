@@ -5,11 +5,14 @@ using System.Threading.Tasks;
 using KitapEvi.DataAccess.Data;
 using KitapEvi.DataAccess.Repository.IRepository;
 using KitapEvi.Models;
+using KitapEvi.Utility;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 namespace KitapEvi.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Authorize(Roles = SharedDetail.Role_Admin + "," + SharedDetail.Role_Employee)]
     public class UserController : Controller
     {
         private readonly ApplicationDbContext _db;

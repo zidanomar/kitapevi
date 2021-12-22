@@ -7,10 +7,12 @@ using KitapEvi.Models;
 using KitapEvi.Utility;
 using Dapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace KitapEvi.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Authorize(Roles = SharedDetail.Role_Admin)]
     public class CoverTypeController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
