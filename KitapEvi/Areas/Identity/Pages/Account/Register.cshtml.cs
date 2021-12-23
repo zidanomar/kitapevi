@@ -147,7 +147,7 @@ namespace KitapEvi.Areas.Identity.Pages.Account
 
                     if (user.Role == null)
                     {
-                        await _userManager.AddToRoleAsync(user, SharedDetail.Role_Admin);
+                        await _userManager.AddToRoleAsync(user, SharedDetail.Role_User_Indi);
                     }
                     else
                     {
