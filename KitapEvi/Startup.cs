@@ -16,6 +16,7 @@ using KitapEvi.DataAccess.Repository.IRepository;
 using KitapEvi.DataAccess.Repository;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using KitapEvi.Utility;
+using Stripe;
 
 namespace KitapEvi
 {
@@ -37,6 +38,7 @@ namespace KitapEvi
             services.AddIdentity<IdentityUser, IdentityRole>().AddDefaultTokenProviders()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddSingleton<IEmailSender, EmailSender>();
+            services.Configure<StripeSettings>(Configuration.GetSection("Stripe"));
             services.Configure<EmailOptions>(Configuration);
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddControllersWithViews().AddRazorRuntimeCompilation();
@@ -74,6 +76,7 @@ namespace KitapEvi
             app.UseStaticFiles();
 
             app.UseRouting();
+            StripeConfiguration.ApiKey = Configuration.GetSection("Stripe")["SecretKey"];
             app.UseSession();
             app.UseAuthentication();
             app.UseAuthorization();
