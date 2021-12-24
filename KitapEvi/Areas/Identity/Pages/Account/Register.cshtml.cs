@@ -136,7 +136,6 @@ namespace KitapEvi.Areas.Identity.Pages.Account
                 {
                     _logger.LogInformation("User created a new account with password.");
 
-
                     if (user.Role == null)
                     {
                         await _userManager.AddToRoleAsync(user, SharedDetail.Role_User_Indi);
@@ -158,38 +157,9 @@ namespace KitapEvi.Areas.Identity.Pages.Account
                         values: new { area = "Identity", userId = user.Id, code = code },
                         protocol: Request.Scheme);
 
+                    await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
+                        $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
-                    var PathToFile = _hostEnvironment.WebRootPath + Path.DirectorySeparatorChar.ToString()
-                        + "Templates" + Path.DirectorySeparatorChar.ToString() + "EmailTemplates"
-                        + Path.DirectorySeparatorChar.ToString() + "Confirm_Account_Registration.html";
-
-                    var subject = "Confirm Account Registration";
-                    string HtmlBody = "";
-                    using (StreamReader streamReader = System.IO.File.OpenText(PathToFile))
-                    {
-                        HtmlBody = streamReader.ReadToEnd();
-                    }
-
-                    //{0} : Subject  
-                    //{1} : DateTime  
-                    //{2} : Name  
-                    //{3} : Email  
-                    //{4} : Message  
-                    //{5} : callbackURL  
-
-                    string Message = $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.";
-
-                    string messageBody = string.Format(HtmlBody,
-                        subject,
-                        String.Format("{0:dddd, d MMMM yyyy}", DateTime.Now),
-                        user.Name,
-                        user.Email,
-                        Message,
-                        callbackUrl
-                        );
-
-
-                    await _emailSender.SendEmailAsync(Input.Email, "Confirm your email", messageBody);
                     if (_userManager.Options.SignIn.RequireConfirmedAccount)
                     {
                         return RedirectToPage("RegisterConfirmation", new { email = Input.Email });
