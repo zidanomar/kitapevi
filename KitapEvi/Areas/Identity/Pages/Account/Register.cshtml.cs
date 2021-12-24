@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -10,6 +11,7 @@ using KitapEvi.Models;
 using KitapEvi.Utility;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -29,6 +31,7 @@ namespace KitapEvi.Areas.Identity.Pages.Account
         private readonly IEmailSender _emailSender;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IWebHostEnvironment _hostEnvironment;
 
         public RegisterModel(
             UserManager<IdentityUser> userManager,
@@ -36,9 +39,11 @@ namespace KitapEvi.Areas.Identity.Pages.Account
             ILogger<RegisterModel> logger,
             IEmailSender emailSender,
             RoleManager<IdentityRole> roleManager,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            IWebHostEnvironment hostEnvironment)
         {
             _userManager = userManager;
+            _hostEnvironment = hostEnvironment;
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
@@ -77,17 +82,19 @@ namespace KitapEvi.Areas.Identity.Pages.Account
             public string City { get; set; }
             public string State { get; set; }
             public string PostalCode { get; set; }
-			public string PhoneNumber { get; set; }
-			public int? CompanyId { get; set; }
+            public string PhoneNumber { get; set; }
+            public int? CompanyId { get; set; }
             public string Role { get; set; }
 
             public IEnumerable<SelectListItem> CompanyList { get; set; }
             public IEnumerable<SelectListItem> RoleList { get; set; }
+
         }
 
         public async Task OnGetAsync(string returnUrl = null)
         {
             ReturnUrl = returnUrl;
+
             Input = new InputModel()
             {
                 CompanyList = _unitOfWork.Company.GetAll().Select(i => new SelectListItem
@@ -101,12 +108,13 @@ namespace KitapEvi.Areas.Identity.Pages.Account
                     Value = i
                 })
             };
+
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
-            returnUrl ??= Url.Content("~/");
+            returnUrl = returnUrl ?? Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
             if (ModelState.IsValid)
             {
@@ -128,22 +136,6 @@ namespace KitapEvi.Areas.Identity.Pages.Account
                 {
                     _logger.LogInformation("User created a new account with password.");
 
-                    if (!await _roleManager.RoleExistsAsync(SharedDetail.Role_Admin))
-                    {
-                        await _roleManager.CreateAsync(new IdentityRole(SharedDetail.Role_Admin));
-                    }
-                    if (!await _roleManager.RoleExistsAsync(SharedDetail.Role_Employee))
-                    {
-                        await _roleManager.CreateAsync(new IdentityRole(SharedDetail.Role_Employee));
-                    }
-                    if (!await _roleManager.RoleExistsAsync(SharedDetail.Role_User_Comp))
-                    {
-                        await _roleManager.CreateAsync(new IdentityRole(SharedDetail.Role_User_Comp));
-                    }
-                    if (!await _roleManager.RoleExistsAsync(SharedDetail.Role_User_Indi))
-                    {
-                        await _roleManager.CreateAsync(new IdentityRole(SharedDetail.Role_User_Indi));
-                    }
 
                     if (user.Role == null)
                     {
@@ -166,9 +158,38 @@ namespace KitapEvi.Areas.Identity.Pages.Account
                         values: new { area = "Identity", userId = user.Id, code = code },
                         protocol: Request.Scheme);
 
-                    await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                        $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
+                    var PathToFile = _hostEnvironment.WebRootPath + Path.DirectorySeparatorChar.ToString()
+                        + "Templates" + Path.DirectorySeparatorChar.ToString() + "EmailTemplates"
+                        + Path.DirectorySeparatorChar.ToString() + "Confirm_Account_Registration.html";
+
+                    var subject = "Confirm Account Registration";
+                    string HtmlBody = "";
+                    using (StreamReader streamReader = System.IO.File.OpenText(PathToFile))
+                    {
+                        HtmlBody = streamReader.ReadToEnd();
+                    }
+
+                    //{0} : Subject  
+                    //{1} : DateTime  
+                    //{2} : Name  
+                    //{3} : Email  
+                    //{4} : Message  
+                    //{5} : callbackURL  
+
+                    string Message = $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.";
+
+                    string messageBody = string.Format(HtmlBody,
+                        subject,
+                        String.Format("{0:dddd, d MMMM yyyy}", DateTime.Now),
+                        user.Name,
+                        user.Email,
+                        Message,
+                        callbackUrl
+                        );
+
+
+                    await _emailSender.SendEmailAsync(Input.Email, "Confirm your email", messageBody);
                     if (_userManager.Options.SignIn.RequireConfirmedAccount)
                     {
                         return RedirectToPage("RegisterConfirmation", new { email = Input.Email });
@@ -192,6 +213,19 @@ namespace KitapEvi.Areas.Identity.Pages.Account
                     ModelState.AddModelError(string.Empty, error.Description);
                 }
             }
+            Input = new InputModel()
+            {
+                CompanyList = _unitOfWork.Company.GetAll().Select(i => new SelectListItem
+                {
+                    Text = i.Name,
+                    Value = i.Id.ToString()
+                }),
+                RoleList = _roleManager.Roles.Where(u => u.Name != SharedDetail.Role_User_Indi).Select(x => x.Name).Select(i => new SelectListItem
+                {
+                    Text = i,
+                    Value = i
+                })
+            };
 
             // If we got this far, something failed, redisplay form
             return Page();

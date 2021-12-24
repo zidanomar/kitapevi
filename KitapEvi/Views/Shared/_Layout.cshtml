@@ -20,7 +20,7 @@
 	<header>
 		<nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-primary border-bottom box-shadow mb-3">
 			<div class="container">
-				<a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">KitapEvi</a>
+				<a class="navbar-brand" asp-area="Customer" asp-controller="Home" asp-action="Index">Kitap Evi</a>
 				<button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
 						aria-expanded="false" aria-label="Toggle navigation">
 					<span class="navbar-toggler-icon"></span>
@@ -28,9 +28,7 @@
 				<div class="navbar-collapse collapse d-sm-inline-flex flex-sm-row-reverse">
 					<partial name="_LoginPartial" />
 					<ul class="navbar-nav flex-grow-1">
-						<li class="nav-item">
-							<a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-						</li>
+
 
 						@if (User.IsInRole(SharedDetail.Role_Admin))
 						{
@@ -59,7 +57,24 @@
 								</div>
 							</li>
 						}
-
+						<li class="nav-item">
+							<a class="nav-link" asp-area="Admin" asp-controller="Order" asp-action="Index">
+								@if (User.IsInRole(SharedDetail.Role_Employee) || User.IsInRole(SharedDetail.Role_Admin))
+								{
+									<span>Manage Order</span>
+								}
+								else
+								{
+									<span>Order History</span>
+								}
+							</a>
+						</li>
+						@if (User.IsInRole(SharedDetail.Role_Employee) || User.IsInRole(SharedDetail.Role_Admin))
+						{
+							<li class="nav-item">
+								<a class="nav-link" asp-area="Admin" asp-controller="BrainTree" asp-action="Index">BrainTree</a>
+							</li>
+						}
 						@if (HttpContextAccessor.HttpContext.Session.GetInt32(SharedDetail.ssShoppingCart) != null)
 						{
 							<li style="color:white;">
@@ -79,10 +94,6 @@
 								</a>
 							</li>
 						}
-						<li class="nav-item">
-							<a class="nav-link" asp-area="Admin" asp-controller="Order" asp-action="Index">Orders</a>
-						</li>
-
 					</ul>
 				</div>
 			</div>
@@ -95,8 +106,9 @@
 	</div>
 
 	<footer class="border-top footer text-muted">
-		<div class="container">
-			&copy; 2021 - KitapEvi - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+		<div class="container text-center">
+			&copy; 2021 - KitapEvi
+			<i class="fab fa-github"></i> <a href="https://www.github.com/zidanomar" target="_blank" rel="noopener noreferrer">zidanomar</a>
 		</div>
 	</footer>
 	<script src="~/lib/jquery/dist/jquery.min.js"></script>
