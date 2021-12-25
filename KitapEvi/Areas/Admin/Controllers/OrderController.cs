@@ -54,7 +54,7 @@ namespace KitapEvi.Areas.Admin.Controllers
                 var options = new ChargeCreateOptions
                 {
                     Amount = Convert.ToInt32(orderHeader.OrderTotal * 100),
-                    Currency = "usd",
+                    Currency = "uSharedDetail",
                     Description = "Order ID : " + orderHeader.Id,
                     Source = stripeToken
                 };

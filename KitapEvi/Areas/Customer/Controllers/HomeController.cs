@@ -12,19 +12,23 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using KitapEvi.Utility;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Localization;
+using Microsoft.AspNetCore.Localization;
 
 namespace KitapEvi.Areas.Customer.Controllers
 {
     [Area("Customer")]
     public class HomeController : Controller
     {
+        private readonly IHtmlLocalizer<HomeController> _localizer;
         private readonly ILogger<HomeController> _logger;
         private readonly IUnitOfWork _unitOfWork;
 
-        public HomeController(ILogger<HomeController> logger, IUnitOfWork unitOfWork)
+        public HomeController(ILogger<HomeController> logger, IUnitOfWork unitOfWork, IHtmlLocalizer<HomeController> localizer)
         {
             _logger = logger;
             _unitOfWork = unitOfWork;
+            _localizer = localizer;
         }
 
         public IActionResult Index()
@@ -43,9 +47,21 @@ namespace KitapEvi.Areas.Customer.Controllers
                 HttpContext.Session.SetInt32(SharedDetail.ssShoppingCart, count);
             }
 
+            var test = _localizer["Hello"];
+            ViewData["Hello"] = test;
+
 
             return View(productList);
         }
+
+        [HttpPost]
+        public IActionResult CultureManagement(string culture, string returnUrl)
+		{
+            Response.Cookies.Append(CookieRequestCultureProvider.DefaultCookieName, CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
+                new CookieOptions { Expires = DateTimeOffset.Now.AddDays(30)});
+
+            return LocalRedirect(returnUrl);
+		}
 
         public IActionResult Details(int id)
         {

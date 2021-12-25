@@ -15,9 +15,13 @@ using KitapEvi.DataAccess.Data;
 using KitapEvi.DataAccess.Repository.IRepository;
 using KitapEvi.DataAccess.Repository;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Mvc.Razor;
 using KitapEvi.Utility;
 using Stripe;
 using KitapEvi.DataAccess.Initializer;
+using System.Globalization;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.Extensions.Options;
 
 namespace KitapEvi
 {
@@ -52,6 +56,19 @@ namespace KitapEvi
             services.Configure<EmailOptions>(Configuration);
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IDbInitializer, DbInitializer>();
+            services.AddLocalization(options => { options.ResourcesPath = "Resources"; });
+            services.AddMvc().AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix).AddDataAnnotationsLocalization();
+            services.Configure<RequestLocalizationOptions>(options =>
+            {
+               var supportedcultures = new List<CultureInfo>
+               {
+                    new CultureInfo("en"),
+                    new CultureInfo("tr")
+               };
+                options.DefaultRequestCulture = new RequestCulture("en");
+                options.SupportedCultures = supportedcultures;
+                options.SupportedUICultures = supportedcultures;
+            });
             services.AddControllersWithViews().AddRazorRuntimeCompilation();
             services.AddRazorPages();
             services.ConfigureApplicationCookie(options =>
@@ -91,6 +108,12 @@ namespace KitapEvi
             app.UseSession();
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseRequestLocalization(app.ApplicationServices.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value);
+
+            //var supportCultures = new[] { "en", "tr" };
+            //var localizationOptions = new RequestLocalizationOptions().SetDefaultCulture(supportCultures[0])
+            //    .AddSupportedCultures(supportCultures)
+            //    .AddSupportedUICultures(supportCultures);
 
             app.UseEndpoints(endpoints =>
             {

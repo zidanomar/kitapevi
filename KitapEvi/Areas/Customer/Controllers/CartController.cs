@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Options;
 using Stripe;
 
 namespace KitapEvi.Areas.Customer.Controllers
@@ -28,7 +29,8 @@ namespace KitapEvi.Areas.Customer.Controllers
         [BindProperty]
         public ShoppingCartVM ShoppingCartVM { get; set; }
 
-        public CartController(IUnitOfWork unitOfWork, IEmailSender emailSender, UserManager<IdentityUser> userManager)
+        public CartController(IUnitOfWork unitOfWork, IEmailSender emailSender,
+            UserManager<IdentityUser> userManager)
         {
             _unitOfWork = unitOfWork;
             _emailSender = emailSender;
@@ -43,20 +45,20 @@ namespace KitapEvi.Areas.Customer.Controllers
             ShoppingCartVM = new ShoppingCartVM()
             {
                 OrderHeader = new Models.OrderHeader(),
-                ListCart = _unitOfWork.ShoppingCart.GetAll(u=>u.ApplicationUserId==claim.Value, includeProperties:"Product")
+                ListCart = _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == claim.Value, includeProperties: "Product")
             };
             ShoppingCartVM.OrderHeader.OrderTotal = 0;
             ShoppingCartVM.OrderHeader.ApplicationUser = _unitOfWork.ApplicationUser
-                                                        .GetFirstOrDefault(u => u.Id == claim.Value, 
+                                                        .GetFirstOrDefault(u => u.Id == claim.Value,
                                                         includeProperties: "Company");
 
-            foreach(var list in ShoppingCartVM.ListCart)
+            foreach (var list in ShoppingCartVM.ListCart)
             {
                 list.Price = SharedDetail.GetPriceBasedOnQuantity(list.Count, list.Product.Price,
                                                     list.Product.Price50, list.Product.Price100);
                 ShoppingCartVM.OrderHeader.OrderTotal += (list.Price * list.Count);
                 list.Product.Description = SharedDetail.ConvertToRawHtml(list.Product.Description);
-                if(list.Product.Description.Length>100)
+                if (list.Product.Description.Length > 100)
                 {
                     list.Product.Description = list.Product.Description.Substring(0, 99) + "...";
                 }
@@ -94,7 +96,7 @@ namespace KitapEvi.Areas.Customer.Controllers
             return RedirectToAction("Index");
 
         }
-        
+
 
         public IActionResult Plus(int cartId)
         {
@@ -117,11 +119,11 @@ namespace KitapEvi.Areas.Customer.Controllers
                 var cnt = _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == cart.ApplicationUserId).ToList().Count;
                 _unitOfWork.ShoppingCart.Remove(cart);
                 _unitOfWork.Save();
-                HttpContext.Session.SetInt32(SharedDetail.ssShoppingCart, cnt - 1);                
+                HttpContext.Session.SetInt32(SharedDetail.ssShoppingCart, cnt - 1);
             }
             else
             {
-                 cart.Count -= 1;
+                cart.Count -= 1;
                 cart.Price = SharedDetail.GetPriceBasedOnQuantity(cart.Count, cart.Product.Price,
                                     cart.Product.Price50, cart.Product.Price100);
                 _unitOfWork.Save();
@@ -135,11 +137,11 @@ namespace KitapEvi.Areas.Customer.Controllers
             var cart = _unitOfWork.ShoppingCart.GetFirstOrDefault
                             (c => c.Id == cartId, includeProperties: "Product");
 
-             var cnt = _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == cart.ApplicationUserId).ToList().Count;
-                _unitOfWork.ShoppingCart.Remove(cart);
-                _unitOfWork.Save();
-                HttpContext.Session.SetInt32(SharedDetail.ssShoppingCart, cnt - 1);
-            
+            var cnt = _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == cart.ApplicationUserId).ToList().Count;
+            _unitOfWork.ShoppingCart.Remove(cart);
+            _unitOfWork.Save();
+            HttpContext.Session.SetInt32(SharedDetail.ssShoppingCart, cnt - 1);
+
 
             return RedirectToAction(nameof(Index));
         }
@@ -189,7 +191,7 @@ namespace KitapEvi.Areas.Customer.Controllers
 
             ShoppingCartVM.ListCart = _unitOfWork.ShoppingCart
                                         .GetAll(c => c.ApplicationUserId == claim.Value,
-                                        includeProperties:"Product");
+                                        includeProperties: "Product");
 
             ShoppingCartVM.OrderHeader.PaymentStatus = SharedDetail.PaymentStatusPending;
             ShoppingCartVM.OrderHeader.OrderStatus = SharedDetail.StatusPending;
@@ -199,10 +201,9 @@ namespace KitapEvi.Areas.Customer.Controllers
             _unitOfWork.OrderHeader.Add(ShoppingCartVM.OrderHeader);
             _unitOfWork.Save();
 
-            List<OrderDetails> orderDetailsList = new List<OrderDetails>();
-            foreach(var item in ShoppingCartVM.ListCart)
+            foreach (var item in ShoppingCartVM.ListCart)
             {
-                item.Price = SharedDetail.GetPriceBasedOnQuantity(item.Count, item.Product.Price, 
+                item.Price = SharedDetail.GetPriceBasedOnQuantity(item.Count, item.Product.Price,
                     item.Product.Price50, item.Product.Price100);
                 OrderDetails orderDetails = new OrderDetails()
                 {
@@ -213,7 +214,7 @@ namespace KitapEvi.Areas.Customer.Controllers
                 };
                 ShoppingCartVM.OrderHeader.OrderTotal += orderDetails.Count * orderDetails.Price;
                 _unitOfWork.OrderDetails.Add(orderDetails);
-                
+
             }
 
             _unitOfWork.ShoppingCart.RemoveRange(ShoppingCartVM.ListCart);
@@ -241,13 +242,13 @@ namespace KitapEvi.Areas.Customer.Controllers
                 var service = new ChargeService();
                 Charge charge = service.Create(options);
 
-                if (charge.BalanceTransactionId == null)
+                if (charge.Id == null)
                 {
                     ShoppingCartVM.OrderHeader.PaymentStatus = SharedDetail.PaymentStatusRejected;
                 }
                 else
                 {
-                    ShoppingCartVM.OrderHeader.TransactionId = charge.BalanceTransactionId;
+                    ShoppingCartVM.OrderHeader.TransactionId = charge.Id;
                 }
                 if (charge.Status.ToLower() == "succeeded")
                 {
